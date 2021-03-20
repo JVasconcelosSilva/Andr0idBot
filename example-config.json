@@ -1,0 +1,5 @@
+{
+    "exemplo": "renomear esse arquivo para config.json e inserir o token do bot",
+    "prefix": "!",
+    "token": "bot token aqui"
+    }

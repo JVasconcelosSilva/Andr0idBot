@@ -1,0 +1,3 @@
+Função repeat
+Play em lista de reprodução
+Play baseado em pesquisa
