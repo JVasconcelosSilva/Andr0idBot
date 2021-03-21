@@ -1,3 +1,5 @@
-Função repeat
+Função repeat - OK
 Play em lista de reprodução
 Play baseado em pesquisa
+Exibir lista de reprodução (queue)
+Limpar lista de reprodução

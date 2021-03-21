@@ -6,7 +6,8 @@ const client = new Discord.Client();
 
 const queue = new Map();
 
-const repeat = false;
+var repeat = false;
+var songQueue = 0;
 
 client.once("ready", () => {
     console.log("Pronto!");
@@ -26,7 +27,7 @@ client.on("message", async message => {
 
     const serverQueue = queue.get(message.guild.id);
 
-    if (message.content.startsWith(`${prefix}play`)) {
+    if (message.content.startsWith(`${prefix}p`)) {
         execute(message, serverQueue);
         console.log("Play acionado!");
         return;
@@ -39,8 +40,12 @@ client.on("message", async message => {
         console.log("Stop Acionado!");
         return;
     } else if (message.content.startsWith(`${prefix}repeat`)) {
-        repeat(message, serverQueue);
-        console.log("Repeat Acionado!");
+        repeatQueue(message, serverQueue);
+        console.log(`Repeat Acionado! condition: ${repeat}`);
+        return;
+    } else if (message.content.startsWith(`${prefix}test`)) {
+        test(message, serverQueue);
+        console.log("Test Acionado!");
         return;
     } else {
         message.channel.send("Que?");
@@ -123,7 +128,7 @@ function stop(message, serverQueue) {
 
 function play(guild, song) {
     const serverQueue = queue.get(guild.id);
-    if (!song) {
+    if (!repeat && !song) {
         serverQueue.voiceChannel.leave();
         queue.delete(guild.id);
         return;
@@ -132,15 +137,75 @@ function play(guild, song) {
     const dispatcher = serverQueue.connection
         .play(ytdl(song.url))
         .on("finish", () => {
-            serverQueue.songs.shift();
-            play(guild, serverQueue.songs[0]);
+            // .shift() limpa o primeiro item da lista
+            console.log(`repeat: ${repeat}`);
+            if (!repeat) {
+                // serverQueue.songs.shift();
+                // play(guild, serverQueue.songs[0]);
+                // TODO ao remover o repeat no meio de um queue
+                songQueue++;
+                try {
+                    play(guild, serverQueue.songs[songQueue]);
+                } catch (Exception) {
+                    // Desconectar o bot
+                    // Limpa o queue
+                    // serverQueue.songs = [];
+                    serverQueue.connection.dispatcher.end();
+                }
+            } else {
+                songQueue++;
+                try {
+                    play(guild, serverQueue.songs[songQueue]);
+                } catch (Exception) {
+                    songQueue = 0
+                    play(guild, serverQueue.songs[songQueue]);
+                }
+            }
         })
         .on("error", error => console.error(error));
     dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
     serverQueue.textChannel.send(`Reproduzindo: **${song.title}**`);
 }
 
-function repeat(message, serverQueue) {
+function repeatQueue(message, serverQueue) {
+    if (!message.member.voice.channel)
+        return message.channel.send(
+            "Você precisa estar em um canal de voz para usar esse comando!"
+        );
+    if (!serverQueue)
+        return message.channel.send("Não tem música para repetir...");
+    // VerifyCommandPermission verifyCommandPermission = new VerifyCommandPermission();
+    // verifyCommandPermission.canUseCommand(serverQueue);
+
+    repeat ? repeat = false : repeat = true;
+
+    // var repeatMessage = "";
+    // switch (repeat){
+    //     case 0:
+    //         repeatMessage = "Repetir desativado!";
+    //         break;
+    //     case 1:
+    //         repeatMessage = "Repetindo a lista de reprodução!";
+    //         break;
+    //     case 2:
+    //         repeatMessage = "Repetindo o som atual!";
+    //         break;
+    // }
+
+    // Repetir desativado!
+    // Repetindo a lista de reprodução!
+    // Repetindo o som atual!
+    // serverQueue.textChannel.send(`Reproduzindo: **${song.title}**`);
+}
+
+function test(message, serverQueue) {
+    serverQueue.voiceChannel.repeat;
+    console.log(`serverQueue: ${serverQueue}`);
+    console.log(serverQueue);
+    console.log(`serverQueue.voiceChannel: ${serverQueue.voiceChannel}`);
+    console.log(serverQueue.voiceChannel);
+    console.log(`message: ${message}`);
+    console.log(message);
     return message.channel.send("Em desenvolvimento...");
     if (!message.member.voice.channel)
         return message.channel.send(
