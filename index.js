@@ -141,6 +141,7 @@ function stop(message, serverQueue) {
     if (!serverQueue)
         return message.channel.send("Não tem música pra parar...");
 
+    loop = 0;
     serverQueue.songs = [];
     serverQueue.connection.dispatcher.end();
 }
