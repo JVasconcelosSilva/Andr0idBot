@@ -62,6 +62,10 @@ client.on("message", async message => {
         }
         console.log("Clear Acionado!");
         return;
+    } else if (message.content.startsWith(`${prefix}jump to`)) {
+        jumpTo(message, serverQueue);
+        console.log("JumpTo Acionado!");
+        return;
     } else {
         message.channel.send("Que?");
         console.log(`Código não existe: ${message}`);
@@ -249,6 +253,33 @@ function queueList(message, serverQueue) {
 
     });
     return message.channel.send(`**Lista de Reprodução**\n ${queueList}`);
+}
+
+function jumpTo(message, serverQueue) {
+
+    if (!message.member.voice.channel)
+        return message.channel.send(
+            "Você precisa estar em um canal de voz para utilizar esse comando"
+        );
+    if (!serverQueue)
+        return message.channel.send("Nenhuma lista de reprodução...");
+
+    var songNumber = message.content.trim().slice(-1);
+
+    console.log("songNumber");
+    console.log(songNumber);
+    console.log("serverQueue.songs.length");
+    console.log(serverQueue.songs.length);
+
+    if (serverQueue.songs.length < songNumber || songNumber <= 0)
+        return message.channel.send("Índice não encontrado na lista de reprodução.");
+
+    songQueue = songNumber - 1;
+
+    var test = serverQueue.songs[songQueue];
+    console.log(test);
+
+    return play(message.guild, serverQueue.songs[songQueue]);
 }
 
 client.login(token);

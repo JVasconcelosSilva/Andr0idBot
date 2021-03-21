@@ -5,3 +5,4 @@ Play baseado em pesquisa
 Exibir lista de reprodução (queue) - OK
 Limpar lista de reprodução = OK
 Executar o som 'X' da lista de reprodução
+Remover som 'X' da lista de reprodução
