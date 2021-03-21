@@ -48,16 +48,18 @@ client.on("message", async message => {
         test(message, serverQueue);
         console.log("Test Acionado!");
         return;
+    } else if (message.content.startsWith(`${prefix}queue`)) {
+        queueList(message, serverQueue);
+        console.log("Queue Acionado!");
+        return;
     } else if (message.content.startsWith(`${prefix}clear`)) {
-        // TODO limpar a queue
         if (serverQueue != null) {
             loop = 0
             serverQueue.songs = [];
             message.channel.send("Lista de reprodução limpa!");
-        }else{
+        } else {
             message.channel.send("Não há lista de reprodução!");
         }
-
         console.log("Clear Acionado!");
         return;
     } else {
@@ -223,6 +225,30 @@ function test(message, serverQueue) {
     console.log(`message: ${message}`);
     console.log(message);
     return message.channel.send("Em desenvolvimento...");
+}
+
+function queueList(message, serverQueue) {
+
+    if (!message.member.voice.channel)
+        return message.channel.send(
+            "Você precisa estar em um canal de voz para ver a lista de reprodução!"
+        );
+    if (!serverQueue)
+        return message.channel.send("Nenhuma lista de reprodução...");
+
+    var queueList = "";
+    var songNumber = 0;
+    serverQueue.songs.forEach(song => {
+        songNumber++;
+        song.title
+        if (songQueue == songNumber - 1) {
+            queueList += `**${songNumber}** - **${song.title}**\n`;
+        } else {
+            queueList += `**${songNumber}** - ${song.title}\n`;
+        }
+
+    });
+    return message.channel.send(`**Lista de Reprodução**\n ${queueList}`);
 }
 
 client.login(token);
