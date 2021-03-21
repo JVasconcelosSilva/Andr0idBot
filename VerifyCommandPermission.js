@@ -1,4 +1,9 @@
 // TODO em desenvolvimento
-function canUseCommand(){
+class VerifyCommandPermission {
 
 }
+
+function canUseCommand() {
+
+}
+

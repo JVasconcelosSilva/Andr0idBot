@@ -1,12 +1,13 @@
 const Discord = require("discord.js");
 const { prefix, token } = require("./config.json");
 const ytdl = require("ytdl-core");
+const { verifyCommandPermission } = require("./VerifyCommandPermission.js");
 
 const client = new Discord.Client();
 
 const queue = new Map();
 
-var repeat = false;
+var loop = 0;
 var songQueue = 0;
 
 client.once("ready", () => {
@@ -39,13 +40,25 @@ client.on("message", async message => {
         stop(message, serverQueue);
         console.log("Stop Acionado!");
         return;
-    } else if (message.content.startsWith(`${prefix}repeat`)) {
-        repeatQueue(message, serverQueue);
-        console.log(`Repeat Acionado! condition: ${repeat}`);
+    } else if (message.content.startsWith(`${prefix}loop`)) {
+        loopQueue(message, serverQueue);
+        console.log(`Loop Acionado! condition: ${loop}`);
         return;
     } else if (message.content.startsWith(`${prefix}test`)) {
         test(message, serverQueue);
         console.log("Test Acionado!");
+        return;
+    } else if (message.content.startsWith(`${prefix}clear`)) {
+        // TODO limpar a queue
+        if (serverQueue != null) {
+            loop = 0
+            serverQueue.songs = [];
+            message.channel.send("Lista de reprodução limpa!");
+        }else{
+            message.channel.send("Não há lista de reprodução!");
+        }
+
+        console.log("Clear Acionado!");
         return;
     } else {
         message.channel.send("Que?");
@@ -128,7 +141,7 @@ function stop(message, serverQueue) {
 
 function play(guild, song) {
     const serverQueue = queue.get(guild.id);
-    if (!repeat && !song) {
+    if (loop == 0 && !song) {
         serverQueue.voiceChannel.leave();
         queue.delete(guild.id);
         return;
@@ -137,69 +150,72 @@ function play(guild, song) {
     const dispatcher = serverQueue.connection
         .play(ytdl(song.url))
         .on("finish", () => {
-            // .shift() limpa o primeiro item da lista
-            console.log(`repeat: ${repeat}`);
-            if (!repeat) {
-                // serverQueue.songs.shift();
-                // play(guild, serverQueue.songs[0]);
-                // TODO ao remover o repeat no meio de um queue
-                songQueue++;
-                try {
+
+            switch (loop) {
+                case 0:
+                    songQueue++;
+                    try {
+                        play(guild, serverQueue.songs[songQueue]);
+                    } catch (Exception) {
+                        // Desconectar o bot
+                        // Limpa o queue
+                        // serverQueue.songs = [];
+                        serverQueue.connection.dispatcher.end();
+                    }
+                    break;
+                case 1:
+                    songQueue++;
+                    try {
+                        play(guild, serverQueue.songs[songQueue]);
+                    } catch (Exception) {
+                        songQueue = 0
+                        play(guild, serverQueue.songs[songQueue]);
+                    }
+                    break;
+                case 2:
+                    // TODO Repetir o som atual
                     play(guild, serverQueue.songs[songQueue]);
-                } catch (Exception) {
-                    // Desconectar o bot
-                    // Limpa o queue
-                    // serverQueue.songs = [];
-                    serverQueue.connection.dispatcher.end();
-                }
-            } else {
-                songQueue++;
-                try {
-                    play(guild, serverQueue.songs[songQueue]);
-                } catch (Exception) {
-                    songQueue = 0
-                    play(guild, serverQueue.songs[songQueue]);
-                }
+                    break;
             }
+
         })
         .on("error", error => console.error(error));
     dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
     serverQueue.textChannel.send(`Reproduzindo: **${song.title}**`);
 }
 
-function repeatQueue(message, serverQueue) {
+function loopQueue(message, serverQueue) {
     if (!message.member.voice.channel)
         return message.channel.send(
             "Você precisa estar em um canal de voz para usar esse comando!"
         );
     if (!serverQueue)
         return message.channel.send("Não tem música para repetir...");
+
+    // TODO Orientar a objetos
     // VerifyCommandPermission verifyCommandPermission = new VerifyCommandPermission();
     // verifyCommandPermission.canUseCommand(serverQueue);
 
-    repeat ? repeat = false : repeat = true;
-
-    // var repeatMessage = "";
-    // switch (repeat){
-    //     case 0:
-    //         repeatMessage = "Repetir desativado!";
-    //         break;
-    //     case 1:
-    //         repeatMessage = "Repetindo a lista de reprodução!";
-    //         break;
-    //     case 2:
-    //         repeatMessage = "Repetindo o som atual!";
-    //         break;
-    // }
-
-    // Repetir desativado!
-    // Repetindo a lista de reprodução!
-    // Repetindo o som atual!
-    // serverQueue.textChannel.send(`Reproduzindo: **${song.title}**`);
+    var loopMessage = "";
+    switch (loop) {
+        case 0:
+            loop = 1;
+            loopMessage = "Repetindo a lista de reprodução!";
+            break;
+        case 1:
+            loop = 2;
+            loopMessage = "Repetindo o som atual!";
+            break;
+        case 2:
+            loop = 0;
+            loopMessage = "Repetir desativado!";
+            break;
+    }
+    serverQueue.textChannel.send(loopMessage);
 }
 
 function test(message, serverQueue) {
-    serverQueue.voiceChannel.repeat;
+    serverQueue.voiceChannel.loop;
     console.log(`serverQueue: ${serverQueue}`);
     console.log(serverQueue);
     console.log(`serverQueue.voiceChannel: ${serverQueue.voiceChannel}`);
@@ -207,14 +223,6 @@ function test(message, serverQueue) {
     console.log(`message: ${message}`);
     console.log(message);
     return message.channel.send("Em desenvolvimento...");
-    if (!message.member.voice.channel)
-        return message.channel.send(
-            "Você precisa estar em um canal de voz para usar esse comando!"
-        );
-    if (!serverQueue)
-        return message.channel.send("Não tem música para repetir...");
-    //serverQueue.connection.dispatcher.end();
-    repeat = true;
 }
 
 client.login(token);

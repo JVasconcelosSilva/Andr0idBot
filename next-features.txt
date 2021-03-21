@@ -1,5 +1,7 @@
 Função repeat - OK
+Repetir som da lista de reprodução - OK
 Play em lista de reprodução
 Play baseado em pesquisa
 Exibir lista de reprodução (queue)
-Limpar lista de reprodução
+Limpar lista de reprodução = OK
+Executar o som 'X' da lista de reprodução
